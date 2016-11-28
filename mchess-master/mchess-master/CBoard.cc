@@ -85,7 +85,8 @@ void CBoard::newGame()
  * isSquareThreatened
  * Returns true if OTHER side to move threatens this square
  ***************************************************************/
-bool CBoard::isSquareThreatened(const CSquare& sq) const
+
+ CBoard::isSquareThreatened(const CSquare& sq) const
 {
     if (m_side_to_move > 0)
     {
@@ -243,13 +244,12 @@ void CBoard::find_legal_moves(CMoveList &moves) const
 
     if (m_side_to_move > 0){
         int iscaptured=0;
-        int prerun=0;
+
         for (int i=A1; i<=H8; ++i)
         {
             int8_t piece = m_board[i];
             int j;
-            if(iscaptured==1&&prerun==0)
-                moves.clear();
+
             switch (piece)
             {
                 case WP : // White pawn
@@ -261,25 +261,25 @@ void CBoard::find_legal_moves(CMoveList &moves) const
                         {
                             {
                                 CMove move(piece, i, j, m_board[j], WQ);
-                                moves.push_back(move);
+                                moves.push_back_capture(move);
                             }
                             {
                                 CMove move(piece, i, j, m_board[j], WR);
-                                moves.push_back(move);
+                                moves.push_back_capture(move);
                             }
                             {
                                 CMove move(piece, i, j, m_board[j], WB);
-                                moves.push_back(move);
+                                moves.push_back_capture(move);
                             }
                             {
                                 CMove move(piece, i, j, m_board[j], WN);
-                                moves.push_back(move);
+                                moves.push_back_capture(move);
                             }
                         }
                         else
                         {
                             CMove move(piece, i, j, m_board[j]);
-                            moves.push_back(move);
+                            moves.push_back_capture(move);
                         }
                         iscaptured=1;
                     }
@@ -291,30 +291,31 @@ void CBoard::find_legal_moves(CMoveList &moves) const
                         {
                             {
                                 CMove move(piece, i, j, m_board[j], WQ);
-                                moves.push_back(move);
+                                moves.push_back_capture(move);
                             }
                             {
                                 CMove move(piece, i, j, m_board[j], WR);
-                                moves.push_back(move);
+                                moves.push_back_capture(move);
                             }
                             {
                                 CMove move(piece, i, j, m_board[j], WB);
-                                moves.push_back(move);
+                                moves.push_back_capture(move);
                             }
                             {
                                 CMove move(piece, i, j, m_board[j], WN);
-                                moves.push_back(move);
+                                moves.push_back_capture(move);
                             }
                         }
                         else
                         {
                             CMove move(piece, i, j, m_board[j]);
-                            moves.push_back(move);
+                            moves.push_back_capture(move);
                         }
                         iscaptured=1;
                     }
+
                     j = i + 10; // One square forward
-                    if (m_board[j] == EM &&iscaptured==0)
+                    if (m_board[j] == EM )
                     {
                         if (i > 80) // Check for promotion
                         {
@@ -359,17 +360,7 @@ void CBoard::find_legal_moves(CMoveList &moves) const
                     {
                         
                         int dirs[8] = {NNW, NNE, NWW, NEE, SSW, SSE, SWW, SEE};
-                        for (int k=0; k<8; ++k){
-                            int dir = dirs[k];
-                            j = i+dir;
-                            if (m_board[j] != IV) 
-                                if (m_board[j] <0){
-                                    iscaptured=1;
-                                    CMove move(piece, i, j, m_board[j]);
-                                    moves.push_back(move);
-                                }
-                        }
-                        if(iscaptured==1) break;
+
                         for (int k=0; k<8; ++k)
                         {
                             
@@ -377,7 +368,13 @@ void CBoard::find_legal_moves(CMoveList &moves) const
 
                             j = i+dir;
                             if (m_board[j] != IV) 
-                                if (m_board[j] <= 0)
+                                if(m_board[j]<=0)
+                                {
+                                    iscaptured=1;
+                                    CMove move(piece, i, j, m_board[j]);
+                                    moves.push_back(move);
+                                }
+                                else if (m_board[j] == 0)
                                 {
                                     CMove move(piece, i, j, m_board[j]);
                                     moves.push_back(move);                               
@@ -390,7 +387,7 @@ void CBoard::find_legal_moves(CMoveList &moves) const
                 case WB : // White bishop
                     {
                         int dirs[4] = {NE, NW, SE, SW};
-                        
+
 
                         for (int k=0; k<4; ++k)
                         {
@@ -403,26 +400,13 @@ void CBoard::find_legal_moves(CMoveList &moves) const
                                 if (m_board[j] < 0){
                                     iscaptured=1;
                                     CMove move(piece, i, j, m_board[j]);
-                                    moves.push_back(move);
-                                    break;
+                                    moves.push_back_capture(move);
+                                    break;    
                                 }
-                                else
-                                    break;
-                            }
-                        }
-                        if(iscaptured==1)break;
-                        for (int k=0; k<4; ++k)
-                        {
-                            int dir = dirs[k];
-                            j = i;
-                            while (iscaptured!=1)
-                            {
-                                j += dir;
-                                if (m_board[j] == IV) break;
-                                if (m_board[j] <= 0)
+                                else if (m_board[j] == 0)
                                 {
                                     CMove move(piece, i, j, m_board[j]);
-                                    moves.push_back(move);
+                                    moves.push_back(move);                                                                        
                                 }
                                 else
                                     break;
@@ -435,27 +419,8 @@ void CBoard::find_legal_moves(CMoveList &moves) const
                 case WR : // White rook
                     {
                         int dirs[4] = {N, E, S, W};
-                        
 
-                        for (int k=0; k<4; ++k)
-                        {
-                            int dir = dirs[k];
-                            j = i;
-                            while (1)
-                            {
-                                j += dir;
-                                if (m_board[j] == IV) break;
-                                if (m_board[j] < 0){
-                                    iscaptured=1;
-                                    CMove move(piece, i, j, m_board[j]);
-                                    moves.push_back(move);
-                                    break;
-                                }
-                                else
-                                    break;
-                            }
-                        }
-                        if(iscaptured==1)break;
+
                         for (int k=0; k<4; ++k)
                         {
                             int dir = dirs[k];
@@ -464,7 +429,13 @@ void CBoard::find_legal_moves(CMoveList &moves) const
                             {
                                 j += dir;
                                 if (m_board[j] == IV) break;
-                                if (m_board[j] <= 0)
+                                if (m_board[j] < 0){
+                                    iscaptured=1;
+                                    CMove move(piece, i, j, m_board[j]);
+                                    moves.push_back_capture(move);
+                                    break;
+                                }
+                                else if (m_board[j] == 0)
                                 {
                                     CMove move(piece, i, j, m_board[j]);
                                     moves.push_back(move);
@@ -485,7 +456,6 @@ void CBoard::find_legal_moves(CMoveList &moves) const
                         {
                             int dir = dirs[k];
                             j = i;
-
                             while (1)
                             {
                                 j += dir;
@@ -493,23 +463,10 @@ void CBoard::find_legal_moves(CMoveList &moves) const
                                 if (m_board[j] < 0){
                                     iscaptured=1;
                                     CMove move(piece, i, j, m_board[j]);
-                                    moves.push_back(move);
+                                    moves.push_back_capture(move);
                                     break;
                                 }
-                                else
-                                    break;
-                            }
-                        }
-                        if(iscaptured==1)break;
-                        for (int k=0; k<8; ++k)
-                        {
-                            int dir = dirs[k];
-                            j = i;
-                            while (1)
-                            {
-                                j += dir;
-                                if (m_board[j] == IV) break;
-                                if (m_board[j] <= 0)
+                                else if (m_board[j] <= 0)
                                 {
                                     CMove move(piece, i, j, m_board[j]);
                                     moves.push_back(move);
@@ -529,25 +486,17 @@ void CBoard::find_legal_moves(CMoveList &moves) const
                         int dirs[8] = {NE, NW, SE, SW, N, E, S, W};
                         
                         for (int k=0; k<8; ++k)
-                        {
-                            int dir = dirs[k];
-                            
-                            j = i+dir;
-                            if (m_board[j] != IV) 
-                                if (m_board[j] <0){
-                                    CMove move(piece, i, j, m_board[j]);
-                                    moves.push_back(move);
-                                    iscaptured=1;
-                                }
-                        }
-                        if(iscaptured==1) break;
-                        for (int k=0; k<8; ++k)
                         { 
                             int dir = dirs[k];
 
                             j = i+dir;
                             if (m_board[j] != IV) 
-                                if (m_board[j] <= 0)
+                                if (m_board[j] <0){
+                                    CMove move(piece, i, j, m_board[j]);
+                                    moves.push_back_capture(move);
+                                    iscaptured=1;
+                                }
+                                else if (m_board[j] == 0)
                                 {
                                     CMove move(piece, i, j, m_board[j]);
                                     moves.push_back(move);
@@ -560,21 +509,17 @@ void CBoard::find_legal_moves(CMoveList &moves) const
 
                 default : // Invalid, wrong color, or empty
                     continue;
-            }
-            
-            
+            }            
             prerun=iscaptured;
         }
     }
     else{
         int iscaptured=0;
-        int prerun=0;
         for (int i=A1; i<=H8; ++i)
         {
             int8_t piece = m_board[i];
             int j;
-            if(iscaptured==1&&prerun==0)
-                moves.clear();
+
             switch (piece)
             {
                 case BP : // Black pawn
@@ -586,28 +531,29 @@ void CBoard::find_legal_moves(CMoveList &moves) const
                         {
                             {
                                 CMove move(piece, i, j, m_board[j], BQ);
-                                moves.push_back(move);
+                                moves.push_back_capture(move);
                             }
                             {
                                 CMove move(piece, i, j, m_board[j], BR);
-                                moves.push_back(move);
+                                moves.push_back_capture(move);
                             }
                             {
                                 CMove move(piece, i, j, m_board[j], BB);
-                                moves.push_back(move);
+                                moves.push_back_capture(move);
                             }
                             {
                                 CMove move(piece, i, j, m_board[j], BN);
-                                moves.push_back(move);
+                                moves.push_back_capture(move);
                             }
                         }
                         else
                         {
                             CMove move(piece, i, j, m_board[j]);
-                            moves.push_back(move);
+                            moves.push_back_capture(move);
                         }
                         iscaptured=1;
                     }
+
 
                     j = i - 11; // Diagonal iscaptured
                     if ((m_board[j] != IV && m_board[j] > 0))
@@ -616,28 +562,29 @@ void CBoard::find_legal_moves(CMoveList &moves) const
                         {
                             {
                                 CMove move(piece, i, j, m_board[j], BQ);
-                                moves.push_back(move);
+                                moves.push_back_capture(move);
                             }
                             {
                                 CMove move(piece, i, j, m_board[j], BR);
-                                moves.push_back(move);
+                                moves.push_back_capture(move);
                             }
                             {
                                 CMove move(piece, i, j, m_board[j], BB);
-                                moves.push_back(move);
+                                moves.push_back_capture(move);
                             }
                             {
                                 CMove move(piece, i, j, m_board[j], BN);
-                                moves.push_back(move);
+                                moves.push_back_capture(move);
                             }
                         }
                         else
                         {
                             CMove move(piece, i, j, m_board[j]);
-                            moves.push_back(move);
+                            moves.push_back_capture(move);
                         }
                         iscaptured=1;
                     }
+
 
                     j = i + 10; // One square forward
                     if (iscaptured!=1&&m_board[j] == EM)
@@ -683,19 +630,8 @@ void CBoard::find_legal_moves(CMoveList &moves) const
                 case BN : // Black knight
                     {
                         int dirs[8] = {NNW, NNE, NWW, NEE, SSW, SSE, SWW, SEE};
-                        
 
-                        for (int k=0; k<8; ++k){
-                            int dir = dirs[k];
-                            j = i+dir;
-                            if (m_board[j] != IV) 
-                                if (m_board[j] >0){
-                                    iscaptured=1;
-                                    CMove move(piece, i, j, m_board[j]);
-                                    moves.push_back(move);
-                                }
-                        }
-                        if(iscaptured==1) break;
+                        
                         for (int k=0; k<8; ++k)
                         {
                             
@@ -703,7 +639,12 @@ void CBoard::find_legal_moves(CMoveList &moves) const
 
                             j = i+dir;
                             if (m_board[j] != IV) 
-                                if (m_board[j] >= 0)
+                                if (m_board[j] >0){
+                                    iscaptured=1;
+                                    CMove move(piece, i, j, m_board[j]);
+                                    moves.push_back_capture(move);
+                                }
+                                else if (m_board[j] == 0)
                                 {
                                     CMove move(piece, i, j, m_board[j]);
                                     moves.push_back(move);
@@ -717,6 +658,7 @@ void CBoard::find_legal_moves(CMoveList &moves) const
                     {
                         int dirs[4] = {NE, NW, SE, SW};
                         
+
                         for (int k=0; k<4; ++k)
                         {
                             int dir = dirs[k];
@@ -729,28 +671,13 @@ void CBoard::find_legal_moves(CMoveList &moves) const
                                 {
                                     iscaptured=1;
                                     CMove move(piece, i, j, m_board[j]);
-                                    moves.push_back(move);
+                                    moves.push_back_capture(move);
                                     break;
                                 }
-                                else
-                                    break;
-                            }
-                        }
-                        if(iscaptured==1) break;
-                        for (int k=0; k<4; ++k)
-                        {
-                            int dir = dirs[k];
-                            j = i;
-                            while (1)
-                            {
-                                j += dir;
-                                if (m_board[j] == IV) break;
-                                if (m_board[j] >= 0)
+                                if (m_board[j] == 0)
                                 {
                                     CMove move(piece, i, j, m_board[j]);
                                     moves.push_back(move);
-                                    if (m_board[j] > 0)
-                                        break;
                                 }
                                 else
                                     break;
@@ -777,24 +704,10 @@ void CBoard::find_legal_moves(CMoveList &moves) const
                                 {
                                     iscaptured=1;
                                     CMove move(piece, i, j, m_board[j]);
-                                    moves.push_back(move);
+                                    moves.push_back_capture(move);
                                     break;
                                 }
-                                else
-                                    break;
-                            }
-                        }
-                        if(iscaptured==1) break;
-
-                        for (int k=0; k<4; ++k)
-                        {
-                            int dir = dirs[k];
-                            j = i;
-                            while (1)
-                            {
-                                j += dir;
-                                if (m_board[j] == IV) break;
-                                if (m_board[j] >= 0)
+                                else if (m_board[j] == 0)
                                 {
                                     CMove move(piece, i, j, m_board[j]);
                                     moves.push_back(move);
@@ -812,7 +725,6 @@ void CBoard::find_legal_moves(CMoveList &moves) const
                 case BQ : // Black queen
                     {
                         int dirs[8] = {NE, NW, SE, SW, N, E, S, W};
-                        
 
                         for (int k=0; k<8; ++k)
                         {
@@ -826,23 +738,10 @@ void CBoard::find_legal_moves(CMoveList &moves) const
                                 {
                                     iscaptured=1;
                                     CMove move(piece, i, j, m_board[j]);
-                                    moves.push_back(move);
+                                    moves.push_back_capture(move);
                                     break;
                                 }
-                                else
-                                    break;
-                            }
-                        }
-                        if(iscaptured==1) break;
-                        for (int k=0; k<8; ++k)
-                        {
-                            int dir = dirs[k];
-                            j = i;
-                            while (1)
-                            {
-                                j += dir;
-                                if (m_board[j] == IV) break;
-                                if (m_board[j] >= 0)
+                                else if (m_board[j] == 0)
                                 {
                                     CMove move(piece, i, j, m_board[j]);
                                     moves.push_back(move);
@@ -861,6 +760,7 @@ void CBoard::find_legal_moves(CMoveList &moves) const
                     {
                         int dirs[8] = {NE, NW, SE, SW, N, E, S, W};
                         
+
                         for (int k=0; k<8; ++k)
                         {
                             int dir = dirs[k];
@@ -870,18 +770,10 @@ void CBoard::find_legal_moves(CMoveList &moves) const
                                 if (m_board[j] > 0)
                                 {
                                     CMove move(piece, i, j, m_board[j]);
-                                    moves.push_back(move);
+                                    moves.push_back_capture(move);
                                     iscaptured=1;
                                 }
-                        }
-                        if(iscaptured==1) break;
-                        for (int k=0; k<8; ++k)
-                        {
-                            int dir = dirs[k];
-
-                            j = i+dir;
-                            if (m_board[j] != IV) 
-                                if (m_board[j] >= 0)
+                                else if (m_board[j] == 0)
                                 {
                                     CMove move(piece, i, j, m_board[j]);
                                     moves.push_back(move);
