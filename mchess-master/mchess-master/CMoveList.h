@@ -53,8 +53,8 @@ class CMoveList
             return m_moveList_capture.size();
         }
 
-        const CMove & operator [] (unsigned int ix) const { return m_moveList[ix]; }
-        const CMove get_capture(int ix) { return m_moveList_capture[ix]; }
+        const CMove & operator [] (unsigned int ix) const { return m_moveList_capture[ix]; }
+        const CMove get_uncapture(int ix) { return m_moveList[ix]; }
 
     private:
         std::vector<CMove> m_moveList;
