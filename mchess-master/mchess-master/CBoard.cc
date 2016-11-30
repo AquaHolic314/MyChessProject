@@ -5,8 +5,12 @@
 #define TTY_YELLOW "[33m"
 #define TTY_BLUE   "[34m"
 #define TTY_NORM   "[0m"
-static uint16_t w_castling=0;
-static uint16_t b_castling=0;
+static uint16_t w_castling_k=0;
+static uint16_t b_castling_k=0;
+static uint16_t w_castling_rr=0;
+static uint16_t b_castling_lr=0;
+static uint16_t w_castling_rr=0;
+static uint16_t b_castling_lf=0;
 
 /***************************************************************
  * operator <<
@@ -483,16 +487,19 @@ void CBoard::find_legal_moves(CMoveList &moves) const
                 case WK : // White king
                     {
                         int dirs[8] = {NE, NW, SE, SW, N, E, S, W};
-                        if(w_castling==0){//check for castiling
-                            if(!isSquareThreatened(i) && !isSquareThreatened(i-1) && !isSquareThreatened(i-2)){//long castling
-                                if(m_board[i-1]==EM && m_board[i-2]==EM &&m_board[i-3]==EM)
-                                    CMove move(piece, i, i-2, m_board[i-2],WK);
-
-                            }else if(!isSquareThreatened(i) && !isSquareThreatened(i+1) && !isSquareThreatened(i+2)){//short castling
-                                if(m_board[i+1]==EM && m_board[i+2]==EM)
-                                    CMove move(piece, i, i+2, m_board[i-2],WK);
+                        if(w_castling_k==0){//check for castiling
+                            if(w_castling_rr==0){
+                                if(!isSquareThreatened(i) && !isSquareThreatened(i-1) && !isSquareThreatened(i-2)){//long castling                                
+                                    if(m_board[i-1]==EM && m_board[i-2]==EM &&m_board[i-3]==EM)
+                                        CMove move(piece, i, i-2, m_board[i-2],WK);
+                                }
+                            }else if(w_castling_lr==0){
+                                if(!isSquareThreatened(i) && !isSquareThreatened(i+1) && !isSquareThreatened(i+2)){//short castling
+                                    if(m_board[i+1]==EM && m_board[i+2]==EM)
+                                        CMove move(piece, i, i+2, m_board[i-2],WK);
+                                }
                             }
-                        }                         
+                        }
                         
                         for (int k=0; k<8; ++k)
                         { 
@@ -762,16 +769,19 @@ void CBoard::find_legal_moves(CMoveList &moves) const
                 case BK : // Black king
                     {
                         int dirs[8] = {NE, NW, SE, SW, N, E, S, W};
-                        if(b_castling==0){//check for castiling
-                            if(!isSquareThreatened(i) && !isSquareThreatened(i-1) && !isSquareThreatened(i-2)){//long castling
-                                if(m_board[i-1]==EM && m_board[i-2]==EM &&m_board[i-3]==EM)
-                                    CMove move(piece, i, i-2, m_board[i-2], BK);
-
-                            }else if(!isSquareThreatened(i) && !isSquareThreatened(i+1) && !isSquareThreatened(i+2)){//short castling
-                                if(m_board[i+1]==EM && m_board[i+2]==EM)
-                                    CMove move(piece, i, i+2, m_board[i-2], BK);
+                        if(b_castling_k==0){//check for castiling
+                            if(b_castling_rr==0){
+                                if(!isSquareThreatened(i) && !isSquareThreatened(i-1) && !isSquareThreatened(i-2)){//long castling                                
+                                    if(m_board[i-1]==EM && m_board[i-2]==EM &&m_board[i-3]==EM)
+                                        CMove move(piece, i, i-2, m_board[i-2],BK);
+                                }
+                            }else if(b_castling_lr==0){
+                                if(!isSquareThreatened(i) && !isSquareThreatened(i+1) && !isSquareThreatened(i+2)){//short castling
+                                    if(m_board[i+1]==EM && m_board[i+2]==EM)
+                                        CMove move(piece, i, i+2, m_board[i-2],BK);
+                                }
                             }
-                        }     
+                        }    
                         for (int k=0; k<8; ++k)
                         {
                             int dir = dirs[k];
@@ -853,14 +863,20 @@ void CBoard::make_move(const CMove &move)
         default : break;
     }
 
-    if(m_board[move.m_from]==WK){
-        w_castling+=1;
-    }else if(m_board[move.m_from]==BK){
-        b_castling+=1;
-    }else if(m_board[move.m_from]==WR){
-        w_castling+=1;
-    }else if(m_board[move.m_from]==BR){
-        b_castling+=1;
+    if(m_board[move.piece]==WK){
+        w_castling_k+=1;
+    }else if(m_board[move.piece]==BK){
+        b_castling_k+=1;
+    }else if(m_board[move.piece]==WR){
+        if(move.m_from.col()==1)
+            w_castling_rr+=1;
+        else if(move.m_from.col()==8)
+            w_castling_lr+=1;
+    }else if(m_board[move.piece]==BR){
+        if(move.m_from.col()==1)
+            b_castling_rr+=1;
+        else if(move.m_from.col()==8)
+            b_castling_lr+=1;
     }
     m_board[move.m_to] = m_board[move.m_from];
 
@@ -921,14 +937,19 @@ void CBoard::undo_move(const CMove &move)
         default : break;
     }
     if(m_board[move.m_piece]==WK){
-        w_castling-=1;
+        w_castling_k-=1;
     }else if(m_board[move.m_piece]==BK){
-        b_castling-=1;
+        b_castling_k-=1;
     }else if(m_board[move.m_piece]==WR){
-        w_castling-=1;
+        if(move.m_from.col()==1)
+            w_castling_rr-=1;
+        else if(move.m_from.col()==8)
+            w_castling_lr-=1;
     }else if(m_board[move.m_piece]==BR){
-
-        b_castling-=1;
+        if(move.m_from.col()==1)
+            b_castling_rr+=1;
+        else if(move.m_from.col()==8)
+            b_castling_lr+=1;
     }
 
     m_board[move.m_from] = move.m_piece;
